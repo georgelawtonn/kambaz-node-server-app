@@ -72,3 +72,53 @@ export function deleteQuestion(questionId) {
         });
     });
 }
+
+export async function syncQuizQuestions(quizId, questions) {
+    try {
+        const existingQuestions = await questionModel.find({ quiz: quizId });
+        const existingIds = existingQuestions.map(q => q._id.toString());
+        const newQuestionIds = questions.map(q => q._id);
+        const questionIdsToDelete = existingIds.filter(_id => !newQuestionIds.includes(_id));
+        const questionsToAdd = questions.filter(q => !existingIds.includes(q._id));
+        const questionsToUpdate = questions.filter(q => existingIds.includes(q._id));
+
+        if (questionIdsToDelete.length > 0) {
+            await questionModel.deleteMany({ _id: { $in: questionIdsToDelete } });
+
+            await quizModel.updateOne(
+                { _id: quizId },
+                { $pull: { questions: { $in: questionIdsToDelete } } }
+            );
+        }
+
+        if (questionsToAdd.length > 0) {
+            const addedQuestions = await questionModel.insertMany(
+                questionsToAdd.map(q => ({ ...q, quiz: quizId, isDraft: false }))
+            );
+            const addedIds = addedQuestions.map(q => q._id);
+            await quizModel.updateOne(
+                { _id: quizId },
+                { $push: { questions: { $each: addedIds } } }
+            );
+        }
+
+        for (const question of questionsToUpdate) {
+            await questionModel.updateOne(
+                { _id: question._id },
+                { $set: { ...question, isDraft: false } }
+            );
+        }
+
+        const totalPoints = questions.reduce((sum, q) => sum + (q.points || 1), 0);
+        await quizModel.updateOne(
+            { _id: quizId },
+            { $set: { points: totalPoints } }
+        );
+
+        return await questionModel.find({ quiz: quizId });
+
+    } catch (error) {
+        console.error("Error syncing quiz questions:", error);
+        throw error;
+    }
+}

@@ -21,11 +21,11 @@ const questionSchema = new mongoose.Schema(
         choices: [String],
         multipleChoiceAnswer: {
             type: Number,
-            default: null
+            default: 0
         },
         trueFalseAnswer: {
             type: Boolean,
-            default: null
+            default: true
         },
         answers: [String]
     },

@@ -56,4 +56,12 @@ export default function QuizRoutes(app) {
         const status = await dao.deleteQuestion(questionId);
         res.json(status);
     });
+
+    app.post("/api/quizzes/:quizId/sync-questions", async (req, res) => {
+        const { quizId } = req.params;
+        const { questions } = req.body;
+        console.log(questions);
+        const updatedQuestions = await dao.syncQuizQuestions(quizId, questions);
+        res.json(updatedQuestions);
+    });
 }

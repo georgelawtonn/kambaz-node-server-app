@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 const attemptSchema = new mongoose.Schema(
     {
+        _id: String,
         user: {
             type: String,
             ref: "UserModel",
@@ -14,7 +15,8 @@ const attemptSchema = new mongoose.Schema(
         },
         attemptNumber: {
             type: Number,
-            required: true
+            required: true,
+            default: 1
         },
         score: {
             type: Number,
@@ -30,7 +32,7 @@ const attemptSchema = new mongoose.Schema(
 
                 selectedChoiceIndex: Number,
                 trueFalseAnswer: Boolean,
-                textAnswers: [String],
+                textAnswers: String,
 
                 isCorrect: Boolean,
                 pointsEarned: Number

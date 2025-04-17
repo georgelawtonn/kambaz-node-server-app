@@ -60,7 +60,6 @@ export default function QuizRoutes(app) {
     app.post("/api/quizzes/:quizId/sync-questions", async (req, res) => {
         const { quizId } = req.params;
         const { questions } = req.body;
-        console.log(questions);
         const updatedQuestions = await dao.syncQuizQuestions(quizId, questions);
         res.json(updatedQuestions);
     });

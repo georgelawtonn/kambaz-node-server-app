@@ -1,6 +1,7 @@
 import * as dao from "./dao.js";
 import * as courseDao from "../Courses/dao.js";
 import * as enrollmentsDao from "../Enrollments/dao.js";
+import * as attemptsDao from "../Attempts/dao.js";
 
 export default function UserRoutes(app) {
     const createUser = async (req, res) => {
@@ -143,6 +144,49 @@ export default function UserRoutes(app) {
         const users = await enrollmentsDao.findUsersForCourse(cid);
         res.json(users);
     };
+    const createOrUpdateAttempt = async (req, res) => {
+        let { uid, qid } = req.params;
+        const currentUser = req.session["currentUser"];
+        if (uid === "current") {
+            uid = currentUser._id;
+        }
+        const existingAttempt = await attemptsDao.findAttemptsByUserAndQuiz(uid, qid);
+
+        if (existingAttempt) {
+            const updatedData = {
+                ...req.body,
+                user: uid,
+                quiz: qid
+            };
+            const update = await attemptsDao.updateAttempt(existingAttempt._id, updatedData);
+            res.json(update);
+        } else {
+            const attemptData = {
+                ...req.body,
+                user: uid,
+                quiz: qid,
+                attemptNumber: 1,
+                score: req.body.score || 0
+            };
+
+            const newAttempt = await attemptsDao.createAttempt(attemptData);
+            res.json(newAttempt);
+        }
+    }
+    const findAttemptForUserAndQuiz = async (req, res) => {
+        let { uid, qid } = req.params;
+        const currentUser = req.session["currentUser"];
+
+        if (uid === "current") {
+            uid = currentUser._id;
+        }
+
+        const attempt = await attemptsDao.findAttemptsByUserAndQuiz(uid, qid);
+        res.json(attempt);
+    };
+
+    app.get("/api/users/:uid/quizzes/:qid/attempts", findAttemptForUserAndQuiz);
+    app.post("/api/users/:uid/quizzes/:qid/attempts", createOrUpdateAttempt);
     app.get("/api/courses/:cid/users", findUsersForCourse);
     app.post("/api/users/:uid/courses/:cid", enrollUserInCourse);
     app.delete("/api/users/:uid/courses/:cid", unenrollUserFromCourse);

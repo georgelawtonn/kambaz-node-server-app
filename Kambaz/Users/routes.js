@@ -153,10 +153,15 @@ export default function UserRoutes(app) {
         const existingAttempt = await attemptsDao.findAttemptsByUserAndQuiz(uid, qid);
 
         if (existingAttempt) {
+            let attemptNumberV = existingAttempt.attemptNumber;
+            if (currentUser.role === "STUDENT") {
+                attemptNumberV++;
+            }
             const updatedData = {
                 ...req.body,
                 user: uid,
-                quiz: qid
+                quiz: qid,
+                attemptNumber: attemptNumberV,
             };
             const update = await attemptsDao.updateAttempt(existingAttempt._id, updatedData);
             res.json(update);
